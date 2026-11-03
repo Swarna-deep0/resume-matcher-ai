@@ -1,0 +1,23 @@
+# Secrets
+.env
+
+# Java / Maven
+target/
+*.class
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Node / Python
+node_modules/
+venv/
+__pycache__/
+
+# macOS
+.DS_Store
+
+# Uploaded resumes are private data: never commit them
+uploads/*
+!uploads/.gitkeep
