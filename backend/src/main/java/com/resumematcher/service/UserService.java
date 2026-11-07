@@ -9,7 +9,7 @@ import com.resumematcher.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.resumematcher.exception.AccountNotFoundException;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -55,6 +55,10 @@ public class UserService {
             throw new InvalidCredentialsException();
         }
         return found.get();
+    }
+
+    public User getById(Long id) {
+        return userRepository.findById(id).orElseThrow(AccountNotFoundException::new);
     }
 
     private String normalizeEmail(String email) {
