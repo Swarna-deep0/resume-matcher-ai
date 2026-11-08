@@ -7,6 +7,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,5 +47,29 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleAccountNotFound(AccountNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of("UNAUTHORIZED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ResumeRejectedException.class)
+    public ResponseEntity<ApiError> handleResumeRejected(ResumeRejectedException ex) {
+        return ResponseEntity.status(ex.getStatus())
+                .body(ApiError.of(ex.getCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(AiServiceUnavailableException.class)
+    public ResponseEntity<ApiError> handleAiUnavailable(AiServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiError.of("AI_SERVICE_UNAVAILABLE", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleTooLarge(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiError.of("FILE_TOO_LARGE", "The PDF must be at most 5 MB"));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiError> handleMissingPart(MissingServletRequestPartException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of("INVALID_REQUEST", "A PDF file is required in the 'file' field"));
     }
 }
