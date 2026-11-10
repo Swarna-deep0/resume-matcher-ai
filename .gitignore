@@ -21,3 +21,4 @@ __pycache__/
 # Uploaded resumes are private data: never commit them
 uploads/*
 !uploads/.gitkeep
+.pytest_cache/
