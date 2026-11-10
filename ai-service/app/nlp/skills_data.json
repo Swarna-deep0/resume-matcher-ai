@@ -3,7 +3,7 @@
   "skills": [
     {"name": "Java", "category": "language", "aliases": []},
     {"name": "Python", "category": "language", "aliases": []},
-    {"name": "JavaScript", "category": "language", "aliases": ["js", "ecmascript", "es6"]},
+    {"name": "JavaScript", "category": "language", "aliases": ["ecmascript", "es6"]},
     {"name": "TypeScript", "category": "language", "aliases": []},
     {"name": "C++", "category": "language", "aliases": ["cpp"]},
     {"name": "C#", "category": "language", "aliases": ["csharp", "c sharp"]},
@@ -41,6 +41,8 @@
     {"name": "Ruby on Rails", "category": "framework", "aliases": ["rails"]},
     {"name": "Tailwind CSS", "category": "framework", "aliases": ["tailwind", "tailwindcss"]},
     {"name": "Bootstrap", "category": "framework", "aliases": []},
+    {"name": ".NET", "category": "framework", "aliases": ["dotnet", "dot net"]},
+    {"name": "ASP.NET", "category": "framework", "aliases": ["aspnet", "asp net"]},
 
     {"name": "Pandas", "category": "library", "aliases": []},
     {"name": "NumPy", "category": "library", "aliases": []},
