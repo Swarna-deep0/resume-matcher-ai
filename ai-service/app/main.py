@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.errors import ApiError, api_error_handler, validation_error_handler
 from app.nlp import skill_extractor
-from app.routes import extract, internal, skills
+from app.routes import analyze, extract, internal, skills
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,6 +28,7 @@ app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.include_router(internal.router)
 app.include_router(extract.router)
 app.include_router(skills.router)
+app.include_router(analyze.router)
 
 
 @app.get("/health")
