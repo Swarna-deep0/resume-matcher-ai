@@ -1,7 +1,5 @@
-package com.resumematcher.service;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
+package com.resumematcher.service;
 
 import com.resumematcher.dto.AnalysisResponse;
 import com.resumematcher.dto.ExtractedResumeText;
@@ -21,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class AnalysisService {
@@ -48,13 +48,14 @@ public class AnalysisService {
         this.jsonMapper = jsonMapper;
     }
 
-    // Existing single-resume analysis endpoint logic.
+    // Existing single-resume analysis API.
     @Transactional
     public AnalysisResponse analyzeResume(
             Long userId,
             Long resumeId,
             Long jobDescriptionId
     ) {
+
         Resume resume = resumeRepository
                 .findByIdAndUser_Id(resumeId, userId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -85,13 +86,15 @@ public class AnalysisService {
         return response;
     }
 
-    // Processes one resume in an independently committed transaction.
+    // Processes one resume using the snapshot captured at batch submission.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AnalysisResponse processResumeInBatch(
             Long userId,
             Long batchId,
-            Long resumeId
+            Long resumeId,
+            String jobDescriptionSnapshot
     ) {
+
         AnalysisBatch batch = analysisBatchRepository
                 .findByIdAndUser_Id(batchId, userId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -109,7 +112,7 @@ public class AnalysisService {
         return processResume(
                 batch,
                 resume,
-                batch.getJobDescription().getDescriptionText()
+                jobDescriptionSnapshot
         );
     }
 
@@ -119,11 +122,13 @@ public class AnalysisService {
             Resume resume,
             String jobDescriptionText
     ) {
+
         Analysis analysis = analysisRepository.save(
                 new Analysis(batch, resume, jobDescriptionText)
         );
 
         try {
+
             ExtractedResumeText extractedResume = new ExtractedResumeText(
                     resume.getExtractedText(),
                     resume.getPageCount(),
@@ -175,6 +180,7 @@ public class AnalysisService {
     }
 
     private AnalysisResponse toResponse(Analysis analysis) {
+
         return new AnalysisResponse(
                 analysis.getId(),
                 analysis.getResume().getId(),

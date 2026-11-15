@@ -1,3 +1,4 @@
+
 package com.resumematcher.service;
 
 import com.resumematcher.dto.AnalysisBatchRequest;
@@ -36,13 +37,15 @@ public class AnalysisBatchService {
     private final AnalysisRepository analysisRepository;
     private final JsonMapper jsonMapper;
 
-    public AnalysisBatchService(AnalysisBatchRepository analysisBatchRepository,
+    public AnalysisBatchService(
+            AnalysisBatchRepository analysisBatchRepository,
             JobDescriptionRepository jobDescriptionRepository,
             ResumeRepository resumeRepository,
             UserService userService,
             AnalysisService analysisService,
             AnalysisRepository analysisRepository,
-            JsonMapper jsonMapper) {
+            JsonMapper jsonMapper
+    ) {
         this.analysisBatchRepository = analysisBatchRepository;
         this.jobDescriptionRepository = jobDescriptionRepository;
         this.resumeRepository = resumeRepository;
@@ -75,7 +78,8 @@ public class AnalysisBatchService {
             Long userId,
             AnalysisBatchRequest request
     ) {
-        // Reject duplicate resume IDs.
+
+        // Validate duplicate resume IDs.
         Set<Long> uniqueResumeIds = new HashSet<>(request.resumeIds());
 
         if (uniqueResumeIds.size() != request.resumeIds().size()) {
@@ -93,7 +97,10 @@ public class AnalysisBatchService {
                         "Job description not found"
                 ));
 
-        // Verify ownership of every resume before starting.
+        // Capture the job description exactly once.
+        String jobDescriptionSnapshot = jobDescription.getDescriptionText();
+
+        // Verify ownership of all resumes before processing.
         for (Long resumeId : request.resumeIds()) {
             resumeRepository.findByIdAndUser_Id(resumeId, userId)
                     .orElseThrow(() -> new ResponseStatusException(
@@ -104,7 +111,7 @@ public class AnalysisBatchService {
 
         User user = userService.getById(userId);
 
-        // Save the batch before processing individual resumes.
+        // Create the batch.
         AnalysisBatch batch = analysisBatchRepository.save(
                 new AnalysisBatch(
                         user,
@@ -113,16 +120,17 @@ public class AnalysisBatchService {
                 )
         );
 
-        // Process each resume in its own transaction.
+        // Process every resume using the same JD snapshot.
         for (Long resumeId : request.resumeIds()) {
             analysisService.processResumeInBatch(
                     userId,
                     batch.getId(),
-                    resumeId
+                    resumeId,
+                    jobDescriptionSnapshot
             );
         }
 
-        // Finish the batch after all individual analyses are recorded.
+        // Retrieve the updated batch.
         AnalysisBatch completedBatch = analysisBatchRepository
                 .findByIdAndUser_Id(batch.getId(), userId)
                 .orElseThrow(() -> new IllegalStateException(
@@ -131,23 +139,19 @@ public class AnalysisBatchService {
 
         completedBatch.finish();
 
-        AnalysisBatch savedBatch = analysisBatchRepository.save(completedBatch);
+        AnalysisBatch savedBatch =
+                analysisBatchRepository.save(completedBatch);
 
-        return new AnalysisBatchResponse(
-                savedBatch.getId(),
-                savedBatch.getJobDescription().getId(),
-                savedBatch.getStatus(),
-                savedBatch.getTotalResumes(),
-                savedBatch.getCompletedCount(),
-                savedBatch.getFailedCount(),
-                savedBatch.getCreatedAt(),
-                savedBatch.getCompletedAt()
-        );
+        return toBatchResponse(savedBatch);
     }
 
     @Transactional(readOnly = true)
-    public BatchResultsResponse getBatchResults(Long userId, Long batchId) {
-        // Verify that the batch belongs to the authenticated user.
+    public BatchResultsResponse getBatchResults(
+            Long userId,
+            Long batchId
+    ) {
+
+        // Verify batch ownership.
         AnalysisBatch batch = analysisBatchRepository
                 .findByIdAndUser_Id(batchId, userId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -155,7 +159,7 @@ public class AnalysisBatchService {
                         "Analysis batch not found"
                 ));
 
-        // Retrieve all analyses for this batch, ordered by score.
+        // Retrieve all results for this batch.
         List<Analysis> analyses = analysisRepository
                 .findAllByBatch_IdAndBatch_User_IdOrderByScoreDescAnalyzedAtAsc(
                         batchId,
@@ -179,16 +183,35 @@ public class AnalysisBatchService {
         );
     }
 
-    private BatchAnalysisResultResponse toBatchAnalysisResult(Analysis analysis) {
+    private AnalysisBatchResponse toBatchResponse(AnalysisBatch batch) {
+
+        return new AnalysisBatchResponse(
+                batch.getId(),
+                batch.getJobDescription().getId(),
+                batch.getStatus(),
+                batch.getTotalResumes(),
+                batch.getCompletedCount(),
+                batch.getFailedCount(),
+                batch.getCreatedAt(),
+                batch.getCompletedAt()
+        );
+    }
+
+    private BatchAnalysisResultResponse toBatchAnalysisResult(
+            Analysis analysis
+    ) {
+
         AnalyzeResponse aiResult = null;
 
         if (analysis.getResultJson() != null
                 && !analysis.getResultJson().isBlank()) {
+
             try {
                 aiResult = jsonMapper.readValue(
                         analysis.getResultJson(),
                         AnalyzeResponse.class
                 );
+
             } catch (JacksonException exception) {
                 throw new IllegalStateException(
                         "Unable to deserialize analysis result for analysis ID: "
@@ -221,6 +244,7 @@ public class AnalysisBatchService {
     }
 
     private String getScoreCategory(Double score) {
+
         if (score == null) {
             return null;
         }

@@ -21,6 +21,10 @@ public class AnalysisBatch {
     @JoinColumn(name = "job_description_id", nullable = false)
     private JobDescription jobDescription;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    private AnalysisSession session;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private BatchStatus status;
@@ -43,17 +47,33 @@ public class AnalysisBatch {
     protected AnalysisBatch() {
     }
 
+    // Preserves compatibility with the existing batch service.
     public AnalysisBatch(
             User user,
             JobDescription jobDescription,
             Integer totalResumes
     ) {
+        this(user, jobDescription, null, totalResumes);
+    }
+
+    // Used when creating a batch inside a session.
+    public AnalysisBatch(
+            User user,
+            JobDescription jobDescription,
+            AnalysisSession session,
+            Integer totalResumes
+    ) {
         this.user = user;
         this.jobDescription = jobDescription;
+        this.session = session;
         this.totalResumes = totalResumes;
         this.completedCount = 0;
         this.failedCount = 0;
         this.status = BatchStatus.PROCESSING;
+    }
+
+    public void assignToSession(AnalysisSession session) {
+        this.session = session;
     }
 
     @PrePersist
@@ -70,7 +90,7 @@ public class AnalysisBatch {
     }
 
     public void finish() {
-        if (failedCount == totalResumes) {
+        if (failedCount.equals(totalResumes)) {
             this.status = BatchStatus.FAILED;
         } else if (failedCount > 0) {
             this.status = BatchStatus.COMPLETED_WITH_ERRORS;
@@ -91,6 +111,10 @@ public class AnalysisBatch {
 
     public JobDescription getJobDescription() {
         return jobDescription;
+    }
+
+    public AnalysisSession getSession() {
+        return session;
     }
 
     public BatchStatus getStatus() {

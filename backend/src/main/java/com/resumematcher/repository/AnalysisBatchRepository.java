@@ -15,6 +15,8 @@ public interface AnalysisBatchRepository
     List<AnalysisBatch> findAllByUser_IdOrderByCreatedAtDesc(
             Long userId);
 
+    List<AnalysisBatch> findAllBySession_IdOrderByCreatedAtDesc(Long sessionId);
+
     boolean existsByIdAndUser_Id(Long batchId, Long userId);
 
     boolean existsByJobDescription_Id(Long jobDescriptionId);
