@@ -6,10 +6,10 @@ import java.time.Instant;
 
 @Entity
 @Table(
-    name = "analysis_sessions",
-    indexes = {
-        @Index(name = "idx_sessions_user_updated", columnList = "user_id, updated_at")
-    }
+        name = "analysis_sessions",
+        indexes = {
+                @Index(name = "idx_sessions_user_updated", columnList = "user_id, updated_at")
+        }
 )
 public class AnalysisSession {
 
@@ -64,6 +64,11 @@ public class AnalysisSession {
 
     public void removeJobDescription() {
         this.jobDescription = null;
+    }
+
+    // Marks the session as recently used, so session lists sort by latest activity.
+    public void markUpdated() {
+        this.updatedAt = Instant.now();
     }
 
     public Long getId() {
