@@ -76,7 +76,7 @@ public class AnalysisBatchService {
         return analysisBatchRepository
                 .findAllByUser_IdOrderByCreatedAtDesc(userId)
                 .stream()
-                .map(this::toBatchResponse)
+                .map(AnalysisBatchResponse::from)
                 .toList();
     }
 
@@ -154,7 +154,7 @@ public class AnalysisBatchService {
         AnalysisBatch savedBatch =
                 analysisBatchRepository.save(completedBatch);
 
-        return toBatchResponse(savedBatch);
+        return AnalysisBatchResponse.from(savedBatch);
     }
 
     // Creates the batch and, when a session is supplied, links the session to it.
@@ -246,20 +246,6 @@ public class AnalysisBatchService {
                 batch.getCreatedAt(),
                 batch.getCompletedAt(),
                 results
-        );
-    }
-
-    private AnalysisBatchResponse toBatchResponse(AnalysisBatch batch) {
-
-        return new AnalysisBatchResponse(
-                batch.getId(),
-                batch.getJobDescription().getId(),
-                batch.getStatus(),
-                batch.getTotalResumes(),
-                batch.getCompletedCount(),
-                batch.getFailedCount(),
-                batch.getCreatedAt(),
-                batch.getCompletedAt()
         );
     }
 

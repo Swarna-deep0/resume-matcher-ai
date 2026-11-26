@@ -3,7 +3,6 @@ package com.resumematcher.service;
 import com.resumematcher.dto.AnalysisBatchResponse;
 import com.resumematcher.dto.AnalysisSessionCreateRequest;
 import com.resumematcher.dto.AnalysisSessionResponse;
-import com.resumematcher.entity.AnalysisBatch;
 import com.resumematcher.entity.AnalysisSession;
 import com.resumematcher.entity.JobDescription;
 import com.resumematcher.entity.Resume;
@@ -11,7 +10,6 @@ import com.resumematcher.entity.SessionResume;
 import com.resumematcher.entity.User;
 import com.resumematcher.repository.AnalysisBatchRepository;
 import com.resumematcher.repository.AnalysisSessionRepository;
-import com.resumematcher.repository.JobDescriptionRepository;
 import com.resumematcher.repository.SessionResumeRepository;
 import com.resumematcher.repository.UserRepository;
 
@@ -105,7 +103,7 @@ public class AnalysisSessionService {
                 analysisBatchRepository
                         .findAllBySession_IdOrderByCreatedAtDesc(session.getId())
                         .stream()
-                        .map(this::toBatchResponse)
+                        .map(AnalysisBatchResponse::from)
                         .toList();
 
         return new AnalysisSessionResponse(
@@ -146,20 +144,6 @@ public class AnalysisSessionService {
                 resume.getPageCount(),
                 resume.getCharacterCount(),
                 resume.getCreatedAt()
-        );
-    }
-
-    private AnalysisBatchResponse toBatchResponse(AnalysisBatch batch) {
-
-        return new AnalysisBatchResponse(
-                batch.getId(),
-                batch.getJobDescription().getId(),
-                batch.getStatus(),
-                batch.getTotalResumes(),
-                batch.getCompletedCount(),
-                batch.getFailedCount(),
-                batch.getCreatedAt(),
-                batch.getCompletedAt()
         );
     }
 }
