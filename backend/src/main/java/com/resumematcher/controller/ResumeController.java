@@ -8,12 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/resumes")
@@ -41,7 +44,7 @@ public class ResumeController {
         return resumeTextService.extractText(file);
     }
 
-    // New authenticated upload and persistence endpoint.
+    // Authenticated upload and persistence endpoint.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public ResumeUploadResponse upload(
@@ -51,5 +54,15 @@ public class ResumeController {
         Long userId = Long.valueOf(jwt.getSubject());
 
         return resumeService.uploadResume(userId, file);
+    }
+
+    // New: the authenticated user's uploaded resumes, newest first.
+    @GetMapping
+    public List<ResumeUploadResponse> getResumes(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Long userId = Long.valueOf(jwt.getSubject());
+
+        return resumeService.getUserResumes(userId);
     }
 }

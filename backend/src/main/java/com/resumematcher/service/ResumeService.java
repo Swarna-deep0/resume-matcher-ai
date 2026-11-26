@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 public class ResumeService {
 
@@ -56,17 +58,32 @@ public class ResumeService {
                 extracted.characterCount()
         );
 
-        Resume savedResume = resumeRepository.save(resume);
-
         // 5. Return the upload response.
+        return toResponse(resumeRepository.save(resume));
+    }
+
+    // Returns only the authenticated user's resumes, newest first.
+    // The extracted resume text is never included in the list.
+    @Transactional(readOnly = true)
+    public List<ResumeUploadResponse> getUserResumes(Long userId) {
+
+        return resumeRepository
+                .findAllByUser_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private ResumeUploadResponse toResponse(Resume resume) {
+
         return new ResumeUploadResponse(
-                savedResume.getId(),
-                savedResume.getOriginalFilename(),
-                savedResume.getContentType(),
-                savedResume.getFileSizeBytes(),
-                savedResume.getPageCount(),
-                savedResume.getCharacterCount(),
-                savedResume.getCreatedAt()
+                resume.getId(),
+                resume.getOriginalFilename(),
+                resume.getContentType(),
+                resume.getFileSizeBytes(),
+                resume.getPageCount(),
+                resume.getCharacterCount(),
+                resume.getCreatedAt()
         );
     }
 }
